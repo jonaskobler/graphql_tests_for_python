@@ -36,7 +36,7 @@ app_path: The Python import path to the app instance (e.g., "src.app.app", if yo
 A sample command is 
 
 ```bash
- python tests/generate_graphql_test.py src.app.app --output tests/test_graphql.py --endpoint /graphql
+ python tests/generate_tests.py src.app.app --output tests/test_graphql.py --endpoint /graphql
 ```
 
 
