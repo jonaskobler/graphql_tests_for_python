@@ -1,4 +1,4 @@
-# Automatic GraphQL Test Generator
+# Automatic GraphQL Test Generator for FastAPI apps
 
 This script is designed to automatically generate pytest test cases for your GraphQL API. It introspects your GraphQL schema, generates mock queries/mutations, and outputs a Python test file containing all the generated test cases.
 
@@ -28,7 +28,7 @@ This command sets the PYTHONPATH to the root of your repository, allowing the sc
 
 The script takes command-line arguments:
 ### Positional Argument:
-app_path: The Python import path to the app instance (e.g., "src.app.app", if your app instance is located in src.app).
+app_path: The Python import path to the FastAPI app instance (e.g., "src.app.app", if your app instance is located in src.app).
 ### Optional Arguments:
 --output or -o: Specifies the output file path for the generated tests (defaults to "generated_tests.py").
 --endpoint or -e: Specifies the GraphQL endpoint path (defaults to "/graphql").
