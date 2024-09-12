@@ -91,9 +91,7 @@ def fetch_schema(client: TestClient, endpoint: str) -> dict[str, Any]:
     """
     response = client.post(endpoint, json={"query": query})
     if response.status_code != 200:
-        raise Exception(
-            f"Failed to fetch schema: Status code {response.status_code}"
-        )
+        raise Exception(f"Failed to fetch schema: Status code {response.status_code}")
     data = response.json()
     if "errors" in data:
         raise Exception(f"Schema introspection errors: {data['errors']}")
@@ -103,7 +101,7 @@ def fetch_schema(client: TestClient, endpoint: str) -> dict[str, Any]:
 # This could be used to generate mock values
 def generate_mock_value(type_name: str):
     if type_name == "String":
-        return ''.join(random.choice(string.ascii_letters) for _ in range(8))
+        return "".join(random.choice(string.ascii_letters) for _ in range(8))
     elif type_name == "Int":
         return random.randint(1, 100)
     elif type_name == "Float":
@@ -120,7 +118,9 @@ def generate_mock_value(type_name: str):
 
 
 # Function to generate a selection set for a given type
-def generate_selection_set(type_name: str, schema: dict[str, Any], indent: int = 4) -> str:
+def generate_selection_set(
+    type_name: str, schema: dict[str, Any], indent: int = 4
+) -> str:
     """
     Generates a selection set string for a given GraphQL type.
 
@@ -133,39 +133,55 @@ def generate_selection_set(type_name: str, schema: dict[str, Any], indent: int =
         str: The selection set string.
     """
     selection_set = []
-    indentation = ' ' * indent
-    for type_def in schema['types']:
-        if type_def['name'] == type_name and type_def['kind'] == 'OBJECT':
-            for field in type_def.get('fields', []):
-                field_type = field['type']
+    indentation = " " * indent
+    for type_def in schema["types"]:
+        if type_def["name"] == type_name and type_def["kind"] == "OBJECT":
+            for field in type_def.get("fields", []):
+                field_type = field["type"]
 
                 # Handle nested types and lists
-                if field_type['kind'] == 'OBJECT':
-                    sub_selection = generate_selection_set(field_type['name'], schema, indent + 2)
-                    selection_set.append(f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}")
-                elif field_type['kind'] == 'LIST' and field_type['ofType']['kind'] == 'OBJECT':
-                    sub_selection = generate_selection_set(field_type['ofType']['name'], schema, indent + 2)
-                    selection_set.append(f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}")
-                elif field_type['kind'] == 'NON_NULL' and field_type['ofType']['kind'] == 'OBJECT':
-                    sub_selection = generate_selection_set(field_type['ofType']['name'], schema, indent + 2)
-                    selection_set.append(f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}")
+                if field_type["kind"] == "OBJECT":
+                    sub_selection = generate_selection_set(
+                        field_type["name"], schema, indent + 2
+                    )
+                    selection_set.append(
+                        f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}"
+                    )
+                elif (
+                    field_type["kind"] == "LIST"
+                    and field_type["ofType"]["kind"] == "OBJECT"
+                ):
+                    sub_selection = generate_selection_set(
+                        field_type["ofType"]["name"], schema, indent + 2
+                    )
+                    selection_set.append(
+                        f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}"
+                    )
+                elif (
+                    field_type["kind"] == "NON_NULL"
+                    and field_type["ofType"]["kind"] == "OBJECT"
+                ):
+                    sub_selection = generate_selection_set(
+                        field_type["ofType"]["name"], schema, indent + 2
+                    )
+                    selection_set.append(
+                        f"{indentation}{field['name']} {{\n{sub_selection}\n{indentation}}}"
+                    )
                 else:
                     selection_set.append(f"{indentation}{field['name']}")
 
     # Join with newlines, ensuring each line is properly indented
-    return '\n'.join(selection_set)
+    return "\n".join(selection_set)
 
 
 # Function to determine the correct type name for a field, including nested types
 def get_type_name(field_type):
-    if field_type['kind'] == 'NON_NULL' or field_type['kind'] == 'LIST':
-        return get_type_name(field_type['ofType'])
-    return field_type['name']
+    if field_type["kind"] == "NON_NULL" or field_type["kind"] == "LIST":
+        return get_type_name(field_type["ofType"])
+    return field_type["name"]
 
 
-def generate_test_cases(
-    schema: dict[str, Any]
-) -> list[dict[str, Any]]:
+def generate_test_cases(schema: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Generates test cases for all queries and mutations in the schema.
 
@@ -177,36 +193,43 @@ def generate_test_cases(
     """
     test_cases = []
 
-    for type_def in schema['types']:
+    for type_def in schema["types"]:
         # Only consider OBJECT types that are Query or Mutation
-        if type_def['kind'] == 'OBJECT' and type_def['name'] in ['Query', 'Mutation']:
-            for field in type_def.get('fields', []):
+        if type_def["kind"] == "OBJECT" and type_def["name"] in ["Query", "Mutation"]:
+            for field in type_def.get("fields", []):
                 # Generate inputs based on the field's arguments
                 variables = {}
-                for arg in field['args']:
-                    arg_type_name = get_type_name(arg['type'])
+                for arg in field["args"]:
+                    arg_type_name = get_type_name(arg["type"])
                     # variables[arg['name']] = generate_mock_value(arg_type_name)
-                    variables[arg['name']] = "PLEASE ADD INPUT"
+                    variables[arg["name"]] = "PLEASE ADD INPUT"
 
                 # Determine the return type of the field
-                return_type_name = get_type_name(field['type'])
+                return_type_name = get_type_name(field["type"])
 
                 # Generate the selection set for the return type
                 selection_set = generate_selection_set(return_type_name, schema)
 
                 # Generate a query or mutation string
-                operation_type = 'query' if type_def['name'] == 'Query' else 'mutation'
+                operation_type = "query" if type_def["name"] == "Query" else "mutation"
 
                 def format_type(type_def):
-                    if type_def['kind'] == 'NON_NULL':
+                    if type_def["kind"] == "NON_NULL":
                         return f"{format_type(type_def['ofType'])}!"
-                    elif type_def['kind'] == 'LIST':
+                    elif type_def["kind"] == "LIST":
                         return f"[{format_type(type_def['ofType'])}]"
                     else:
-                        return type_def['name']
+                        return type_def["name"]
 
-                variable_string = ', '.join([f"${arg['name']}: {format_type(arg['type'])}" for arg in field['args']])
-                variable_input = ', '.join([f"{arg['name']}: ${arg['name']}" for arg in field['args']])
+                variable_string = ", ".join(
+                    [
+                        f"${arg['name']}: {format_type(arg['type'])}"
+                        for arg in field["args"]
+                    ]
+                )
+                variable_input = ", ".join(
+                    [f"{arg['name']}: ${arg['name']}" for arg in field["args"]]
+                )
 
                 if variable_string:
                     if selection_set:
@@ -239,13 +262,15 @@ def generate_test_cases(
                             f"}}"
                         )
 
-                test_cases.append({
-                    "name": field['name'],
-                    "operation_type": operation_type,
-                    "query": query_string,
-                    "variables": variables,
-                    "expected_output": None  # Placeholder, since dunno what's happening
-                })
+                test_cases.append(
+                    {
+                        "name": field["name"],
+                        "operation_type": operation_type,
+                        "query": query_string,
+                        "variables": variables,
+                        "expected_output": None,  # Placeholder, since dunno what's happening
+                    }
+                )
     return test_cases
 
 
@@ -275,13 +300,13 @@ def write_test_file(
 
         for i, test_case in enumerate(test_cases):
             test_name = f"test_{test_case['operation_type']}_{test_case['name']}"
-            file.write(f"def {test_name}(client):\n")
+            file.write(f"def {test_name}(client, expect):\n")
             file.write("    query = '''\n")
-            for line in test_case['query'].splitlines():
+            for line in test_case["query"].splitlines():
                 file.write(f"    {line}\n")
             file.write("    '''\n")
             file.write("    variables = {\n")
-            for key, value in test_case['variables'].items():
+            for key, value in test_case["variables"].items():
                 formatted_value = json.dumps(value, indent=4)
                 formatted_value_lines = formatted_value.splitlines()
                 file.write(f"        '{key}': {formatted_value_lines[0]}")
@@ -294,13 +319,8 @@ def write_test_file(
             )
             file.write("    assert response.status_code == 200\n")
             file.write("    response_data = response.json()\n")
-            file.write("    assert response_data == {\n")
-            file.write("        'data': {\n")
-            file.write(f"            '{test_case['name']}': {{\n")
-            file.write("                # Expected fields and values here\n")
-            file.write("            }\n")
-            file.write("        }\n")
-            file.write("    }\n\n\n")
+            file.write("    print(response_data)\n")
+            file.write('    expect("""""", debug=True)\n\n\n')
 
 
 def import_app(app_path: str):
