@@ -27,7 +27,6 @@ def execute_sql_script(filename, cursor):
     with open(filename, "r") as fd:
         sql_file = fd.read()
     sql_commands = sql_file.split(";")[:-1]
-    print(sql_commands)
     for command in sql_commands:
         try:
             cursor.execute(command)
