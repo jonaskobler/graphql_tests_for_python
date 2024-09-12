@@ -1,12 +1,6 @@
-import ast
 import logging
-import re
-import string
-import sys
-import traceback
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Match
 
 import psycopg
 from testcontainers.postgres import PostgresContainer
@@ -15,8 +9,6 @@ import pytest
 logger = logging.getLogger(__name__)
 
 postgres = PostgresContainer("postgres:14-alpine")
-migrations_path = Path(__file__).parent / "db" / "migrations"
-assert migrations_path.exists() and migrations_path.is_dir()
 
 
 def get_up_migrations(filepath: Path) -> list[Path]:
@@ -53,7 +45,7 @@ class DatabaseInfo:
 
 
 @pytest.fixture
-def db_setup(request):
+def db_setup(request, path_to_migrations: Path):
     postgres.start()
 
     def remove_container():
@@ -80,7 +72,7 @@ def db_setup(request):
 
     with conn:
         with conn.cursor() as cursor:
-            for migration in get_up_migrations(migrations_path):
+            for migration in get_up_migrations(path_to_migrations):
                 execute_sql_script(migration, cursor)
 
     conn.close()
